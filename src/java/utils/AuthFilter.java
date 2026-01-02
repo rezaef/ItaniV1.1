@@ -18,7 +18,23 @@ import javax.servlet.*;
 import javax.servlet.annotation.WebFilter;
 import javax.servlet.http.*;
 
-@WebFilter(filterName="AuthFilter", urlPatterns={"/dashboard.jsp"})
+@WebFilter(filterName="AuthFilter", urlPatterns={
+    "/dashboard.jsp",
+
+    "/seed_stock.jsp",
+    "/seed_transactions.jsp",
+    "/seed-stock/*",
+
+    "/fertilizer_stock.jsp",
+    "/fertilizer_transactions.jsp",
+    "/fertilizer-stock/*",
+    
+    "/periods.jsp",
+    "/harvests.jsp",
+    "/period/*",
+    "/harvest/*"
+
+})
 public class AuthFilter implements Filter {
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)

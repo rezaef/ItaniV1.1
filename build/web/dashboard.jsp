@@ -31,8 +31,14 @@
     </div>
     <a class="btn" href="<%=request.getContextPath()%>/api/auth/logout">Logout</a>
   </div>
-  <div style="margin:10px 0 18px; display:flex; gap:10px; flex-wrap:wrap;">
+<!--  <div style="margin:10px 0 18px; display:flex; gap:10px; flex-wrap:wrap;">
+    <a class="btn" href="<%=request.getContextPath()%>/seed_stock.jsp">Seed Stock</a>-->
+  <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
     <a class="btn" href="<%=request.getContextPath()%>/seed_stock.jsp">Seed Stock</a>
+    <a class="btn" href="<%=request.getContextPath()%>/fertilizer_stock.jsp">Fertilizer Stock</a>
+    <a class="btn" href="<%=request.getContextPath()%>/periods.jsp">Periode & Panen</a>
+</div>
+
   </div>
 
   <div class="grid">
