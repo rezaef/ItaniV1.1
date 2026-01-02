@@ -31,6 +31,9 @@
     </div>
     <a class="btn" href="<%=request.getContextPath()%>/api/auth/logout">Logout</a>
   </div>
+  <div style="margin:10px 0 18px; display:flex; gap:10px; flex-wrap:wrap;">
+    <a class="btn" href="<%=request.getContextPath()%>/seed_stock.jsp">Seed Stock</a>
+  </div>
 
   <div class="grid">
     <div class="card"><div>pH</div><div class="val" id="ph">-</div></div>
