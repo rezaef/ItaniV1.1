@@ -93,10 +93,22 @@
 <div class="card">
   <% if (period == null) { %>
     <b>Periode tidak ditemukan / akses ditolak.</b>
-  <% } else { %>
+  <% } else {
+      String mulai = "-";
+      if (period.getTanggalMulai() != null) {
+          String s = period.getTanggalMulai().toString();
+          mulai = (s.length() >= 10) ? s.substring(0, 10) : s; // yyyy-MM-dd
+      }
+
+      String selesai = "-";
+      if (period.getTanggalSelesai() != null) {
+          String s2 = period.getTanggalSelesai().toString();
+          selesai = (s2.length() >= 10) ? s2.substring(0, 10) : s2; // yyyy-MM-dd
+      }
+  %>
     <h3><%=period.getNamaPeriode()%> (ID <%=period.getId()%>)</h3>
-    <div>Mulai: <%=period.getTanggalMulai()==null?"-":period.getTanggalMulai().toLocalDateTime().toString().replace("T"," ")%></div>
-    <div>Selesai: <%=period.getTanggalSelesai()==null?"-":period.getTanggalSelesai().toLocalDateTime().toString().replace("T"," ")%></div>
+    <div>Mulai: <%=mulai%></div>
+    <div>Selesai: <%=selesai%></div>
     <div>Status: <b><%=period.getStatus()%></b></div>
     <div style="margin-top:8px;">Total panen: <b><%=period.getHarvestTotal()%></b> | Record: <b><%=period.getHarvestCount()%></b></div>
   <% } %>
@@ -111,7 +123,7 @@
     <div class="row">
       <div>
         <label>Tanggal Panen</label><br/>
-        <input type="datetime-local" name="tanggal_panen"/>
+        <input type="date" name="tanggal_panen"/>
       </div>
       <div>
         <label>Jenis Tanaman</label><br/>
@@ -148,8 +160,9 @@
       </tr>
     </thead>
     <tbody>
-      <% for (Harvest h : harvests) {
-           String t = (h.getTanggalPanen()==null) ? "-" : h.getTanggalPanen().toLocalDateTime().toString().replace("T"," ");
+      <%
+        for (Harvest h : harvests) {
+          String t = (h.getTanggalPanen()==null) ? "-" : h.getTanggalPanen().toString();
       %>
       <tr>
         <td><%=h.getId()%></td>
@@ -157,7 +170,7 @@
         <td><%=h.getJenisTanaman()%></td>
         <td><%=h.getJumlahPanen()%></td>
         <td><%=h.getCatatan()==null?"":h.getCatatan()%></td>
-        <td>
+              <td>
           <form method="post" action="<%=request.getContextPath()%>/harvest/delete" onsubmit="return confirm('Hapus record panen ini?')">
             <input type="hidden" name="id" value="<%=h.getId()%>"/>
             <input type="hidden" name="periode_id" value="<%=periodeId%>"/>

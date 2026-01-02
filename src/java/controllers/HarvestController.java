@@ -16,6 +16,7 @@ import javax.servlet.http.HttpServletResponse;
  *
  * @author rezaef
  */
+
 import dao.HarvestDAO;
 import dao.PeriodDAO;
 import models.Harvest;
@@ -25,8 +26,8 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
+import java.sql.Date;
+import java.time.LocalDate;
 
 @WebServlet(name="HarvestController", urlPatterns = {
         "/harvest/add",
@@ -48,7 +49,6 @@ public class HarvestController extends HttpServlet {
             if ("/harvest/add".equals(path)) {
                 int periodeId = Integer.parseInt(req.getParameter("periode_id"));
 
-                // cek kepemilikan periode (petani hanya boleh akses periodenya sendiri)
                 Period p = new PeriodDAO().findByIdWithStats(periodeId, userId, isAdmin);
                 if (p == null) {
                     resp.sendRedirect(ctx + "/harvests.jsp?periode_id=" + periodeId + "&err=Akses%20ditolak/Periode%20tidak%20ditemukan");
@@ -67,7 +67,7 @@ public class HarvestController extends HttpServlet {
 
                 Harvest h = new Harvest();
                 h.setPeriodeId(periodeId);
-                h.setTanggalPanen(parseDT(tanggalPanen));
+                h.setTanggalPanen(parseDate(tanggalPanen));
                 h.setJenisTanaman(jenisTanaman);
                 h.setJumlahPanen(Double.parseDouble(jumlahPanen));
                 h.setCatatan(catatan);
@@ -81,7 +81,6 @@ public class HarvestController extends HttpServlet {
                 int id = Integer.parseInt(req.getParameter("id"));
                 int periodeId = Integer.parseInt(req.getParameter("periode_id"));
 
-                // cek kepemilikan periode dulu
                 Period p = new PeriodDAO().findByIdWithStats(periodeId, userId, isAdmin);
                 if (p == null) {
                     resp.sendRedirect(ctx + "/harvests.jsp?periode_id=" + periodeId + "&err=Akses%20ditolak");
@@ -103,10 +102,9 @@ public class HarvestController extends HttpServlet {
 
     private static String trim(String s){ return s==null?"":s.trim(); }
 
-    private static Timestamp parseDT(String s){
+    private static Date parseDate(String s){
         if (s==null || s.trim().isEmpty()) return null;
-        LocalDateTime ldt = LocalDateTime.parse(s.trim());
-        return Timestamp.valueOf(ldt);
+        return Date.valueOf(LocalDate.parse(s.trim()));
     }
 
     private static String urlSafe(String s){

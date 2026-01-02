@@ -9,14 +9,16 @@ package models;
  * @author rezaef
  */
 
+
+import java.sql.Date;
 import java.sql.Timestamp;
 
 public class Period {
     private int id;
     private int userId;
     private String namaPeriode;
-    private Timestamp tanggalMulai;
-    private Timestamp tanggalSelesai;
+    private Date tanggalMulai;
+    private Date tanggalSelesai;
     private String deskripsi;
     private String status;
     private Timestamp createdAt;
@@ -35,11 +37,11 @@ public class Period {
     public String getNamaPeriode() { return namaPeriode; }
     public void setNamaPeriode(String namaPeriode) { this.namaPeriode = namaPeriode; }
 
-    public Timestamp getTanggalMulai() { return tanggalMulai; }
-    public void setTanggalMulai(Timestamp tanggalMulai) { this.tanggalMulai = tanggalMulai; }
+    public Date getTanggalMulai() { return tanggalMulai; }
+    public void setTanggalMulai(Date tanggalMulai) { this.tanggalMulai = tanggalMulai; }
 
-    public Timestamp getTanggalSelesai() { return tanggalSelesai; }
-    public void setTanggalSelesai(Timestamp tanggalSelesai) { this.tanggalSelesai = tanggalSelesai; }
+    public Date getTanggalSelesai() { return tanggalSelesai; }
+    public void setTanggalSelesai(Date tanggalSelesai) { this.tanggalSelesai = tanggalSelesai; }
 
     public String getDeskripsi() { return deskripsi; }
     public void setDeskripsi(String deskripsi) { this.deskripsi = deskripsi; }

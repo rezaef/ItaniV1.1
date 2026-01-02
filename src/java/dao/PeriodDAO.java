@@ -88,10 +88,10 @@ public class PeriodDAO {
 
             ps.setInt(1, p.getUserId());
             ps.setString(2, p.getNamaPeriode());
-            ps.setTimestamp(3, p.getTanggalMulai());
-            ps.setTimestamp(4, p.getTanggalSelesai());
+            ps.setDate(3, p.getTanggalMulai());
+            ps.setDate(4, p.getTanggalSelesai());
             ps.setString(5, p.getDeskripsi());
-            ps.setString(6, p.getStatus() == null || p.getStatus().isEmpty() ? "aktif" : p.getStatus());
+            ps.setString(6, (p.getStatus() == null || p.getStatus().isEmpty()) ? "aktif" : p.getStatus());
 
             ps.executeUpdate();
 
@@ -113,8 +113,8 @@ public class PeriodDAO {
              PreparedStatement ps = c.prepareStatement(sql)) {
 
             ps.setString(1, p.getNamaPeriode());
-            ps.setTimestamp(2, p.getTanggalMulai());
-            ps.setTimestamp(3, p.getTanggalSelesai());
+            ps.setDate(2, p.getTanggalMulai());
+            ps.setDate(3, p.getTanggalSelesai());
             ps.setString(4, p.getDeskripsi());
             ps.setString(5, p.getStatus());
             ps.setInt(6, p.getId());
@@ -145,8 +145,8 @@ public class PeriodDAO {
         p.setId(rs.getInt("id"));
         p.setUserId(rs.getInt("user_id"));
         p.setNamaPeriode(rs.getString("nama_periode"));
-        p.setTanggalMulai(rs.getTimestamp("tanggal_mulai"));
-        p.setTanggalSelesai(rs.getTimestamp("tanggal_selesai"));
+        p.setTanggalMulai(rs.getDate("tanggal_mulai"));
+        p.setTanggalSelesai(rs.getDate("tanggal_selesai"));
         p.setDeskripsi(rs.getString("deskripsi"));
         p.setStatus(rs.getString("status"));
         p.setCreatedAt(rs.getTimestamp("created_at"));

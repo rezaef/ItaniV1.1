@@ -99,12 +99,12 @@
 
       <div>
         <label>Tanggal Mulai</label><br/>
-        <input type="datetime-local" name="tanggal_mulai" id="pmulai"/>
+        <input type="date" name="tanggal_mulai" id="pmulai"/>
       </div>
 
       <div>
         <label>Tanggal Selesai</label><br/>
-        <input type="datetime-local" name="tanggal_selesai" id="pselesai"/>
+        <input type="date" name="tanggal_selesai" id="pselesai"/>
       </div>
 
       <div>
@@ -146,25 +146,24 @@
       </tr>
     </thead>
     <tbody>
-      <% for (Period p : periods) {
-           String mulai = (p.getTanggalMulai()==null) ? "" : p.getTanggalMulai().toLocalDateTime().toString();
-           String selesai = (p.getTanggalSelesai()==null) ? "" : p.getTanggalSelesai().toLocalDateTime().toString();
-           String inMulai = mulai.length() >= 16 ? mulai.substring(0,16) : "";
-           String inSelesai = selesai.length() >= 16 ? selesai.substring(0,16) : "";
+      <%
+        for (Period p : periods) {
+          String mulai = (p.getTanggalMulai()==null) ? "" : p.getTanggalMulai().toString();
+          String selesai = (p.getTanggalSelesai()==null) ? "" : p.getTanggalSelesai().toString();
       %>
       <tr
         data-id="<%=p.getId()%>"
         data-nama="<%= (p.getNamaPeriode()==null?"":p.getNamaPeriode().replace("\"","&quot;")) %>"
-        data-mulai="<%=inMulai%>"
-        data-selesai="<%=inSelesai%>"
+        data-mulai="<%=mulai%>"
+        data-selesai="<%=selesai%>"
         data-status="<%= (p.getStatus()==null?"aktif":p.getStatus()) %>"
         data-desc="<%= (p.getDeskripsi()==null?"":p.getDeskripsi().replace("\"","&quot;")) %>"
       >
         <td><%=p.getId()%></td>
         <% if (isAdmin) { %><td><%=p.getUserId()%></td><% } %>
         <td><%=p.getNamaPeriode()%></td>
-        <td><%= mulai.isEmpty() ? "-" : mulai.replace("T"," ") %></td>
-        <td><%= selesai.isEmpty() ? "-" : selesai.replace("T"," ") %></td>
+        <td><%= mulai.isEmpty() ? "-" : mulai %></td>
+        <td><%= selesai.isEmpty() ? "-" : selesai %></td>
         <td><%=p.getStatus()%></td>
         <td><%=p.getHarvestCount()%></td>
         <td><%=p.getHarvestTotal()%></td>

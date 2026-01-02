@@ -55,7 +55,7 @@ public class HarvestDAO {
              PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             ps.setInt(1, h.getPeriodeId());
-            ps.setTimestamp(2, h.getTanggalPanen());
+            ps.setDate(2, h.getTanggalPanen());
             ps.setString(3, h.getJenisTanaman());
             ps.setDouble(4, h.getJumlahPanen());
             ps.setString(5, h.getCatatan());
@@ -86,7 +86,7 @@ public class HarvestDAO {
         Harvest h = new Harvest();
         h.setId(rs.getInt("id"));
         h.setPeriodeId(rs.getInt("periode_id"));
-        h.setTanggalPanen(rs.getTimestamp("tanggal_panen"));
+        h.setTanggalPanen(rs.getDate("tanggal_panen"));
         h.setJenisTanaman(rs.getString("jenis_tanaman"));
         h.setJumlahPanen(rs.getDouble("jumlah_panen"));
         h.setCatatan(rs.getString("catatan"));

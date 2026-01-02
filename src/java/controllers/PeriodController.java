@@ -24,8 +24,8 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
+import java.sql.Date;
+import java.time.LocalDate;
 
 @WebServlet(name="PeriodController", urlPatterns = {
         "/period/save",
@@ -63,15 +63,15 @@ public class PeriodController extends HttpServlet {
 
                 Period p = new Period();
                 p.setNamaPeriode(nama);
-                p.setTanggalMulai(parseDT(mulai));
-                p.setTanggalSelesai(parseDT(selesai));
+                p.setTanggalMulai(parseDate(mulai));
+                p.setTanggalSelesai(parseDate(selesai));
                 p.setDeskripsi(deskripsi);
                 p.setStatus(status.isEmpty() ? "aktif" : status);
 
                 PeriodDAO dao = new PeriodDAO();
 
                 if (idStr.isEmpty()) {
-                    p.setUserId(isAdmin ? (userId == null ? 1 : userId) : userId); // admin tetap boleh insert, default userId=1 kalau null
+                    p.setUserId(isAdmin ? (userId == null ? 1 : userId) : userId);
                     int newId = dao.insert(p);
                     resp.sendRedirect(ctx + "/periods.jsp?msg=Periode%20dibuat%20(ID%20" + newId + ")");
                 } else {
@@ -97,11 +97,11 @@ public class PeriodController extends HttpServlet {
 
     private static String trim(String s){ return s==null?"":s.trim(); }
 
-    private static Timestamp parseDT(String s){
+    // ✅ input type="date" -> yyyy-MM-dd
+    private static Date parseDate(String s){
         if (s==null || s.trim().isEmpty()) return null;
-        // input datetime-local: yyyy-MM-ddTHH:mm
-        LocalDateTime ldt = LocalDateTime.parse(s.trim());
-        return Timestamp.valueOf(ldt);
+        LocalDate d = LocalDate.parse(s.trim());
+        return Date.valueOf(d);
     }
 
     private static String urlSafe(String s){
@@ -117,27 +117,11 @@ public class PeriodController extends HttpServlet {
     private static Integer getUserId(Object user){
         if (user == null) return null;
 
-        // coba method2 umum
         Integer v;
         v = invokeInt(user, "getId");        if (v != null) return v;
         v = invokeInt(user, "getUserId");    if (v != null) return v;
         v = invokeInt(user, "getIdUser");    if (v != null) return v;
         v = invokeInt(user, "getIduser");    if (v != null) return v;
-
-        // fallback: field "id" atau "userId"
-        try {
-            var f = user.getClass().getDeclaredField("id");
-            f.setAccessible(true);
-            Object o = f.get(user);
-            if (o instanceof Number) return ((Number)o).intValue();
-        } catch(Exception ignored){}
-
-        try {
-            var f = user.getClass().getDeclaredField("userId");
-            f.setAccessible(true);
-            Object o = f.get(user);
-            if (o instanceof Number) return ((Number)o).intValue();
-        } catch(Exception ignored){}
 
         return null;
     }

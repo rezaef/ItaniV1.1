@@ -17,12 +17,13 @@ import javax.servlet.http.HttpServletResponse;
  * @author rezaef
  */
 
+import java.sql.Date;
 import java.sql.Timestamp;
 
 public class Harvest {
     private int id;
     private int periodeId;
-    private Timestamp tanggalPanen;
+    private Date tanggalPanen;
     private String jenisTanaman;
     private double jumlahPanen;
     private String catatan;
@@ -35,8 +36,8 @@ public class Harvest {
     public int getPeriodeId() { return periodeId; }
     public void setPeriodeId(int periodeId) { this.periodeId = periodeId; }
 
-    public Timestamp getTanggalPanen() { return tanggalPanen; }
-    public void setTanggalPanen(Timestamp tanggalPanen) { this.tanggalPanen = tanggalPanen; }
+    public Date getTanggalPanen() { return tanggalPanen; }
+    public void setTanggalPanen(Date tanggalPanen) { this.tanggalPanen = tanggalPanen; }
 
     public String getJenisTanaman() { return jenisTanaman; }
     public void setJenisTanaman(String jenisTanaman) { this.jenisTanaman = jenisTanaman; }
