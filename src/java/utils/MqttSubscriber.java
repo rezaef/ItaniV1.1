@@ -98,6 +98,15 @@ public class MqttSubscriber {
 
                         boolean ok = new SensorDAO().insertReading(ph, soilMoist, soilTemp, ec, n, p, k);
                         System.out.println("[MQTT] insert DB = " + ok);
+
+                        // Buat notifikasi WARNING/DANGER dari reading sensor (source=ESP)
+                        if (ok) {
+                            try {
+                                SensorNotifier.onNewReading(ph, soilMoist, soilTemp, ec, n, p, k, "ESP");
+                            } catch (Exception ex) {
+                                System.out.println("[MQTT] notify error: " + ex.getMessage());
+                            }
+                        }
                     }
                 }
 

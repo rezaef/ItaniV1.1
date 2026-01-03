@@ -8,6 +8,8 @@
 <%@page import="models.User"%>
 <%@page import="dao.WateringLogDAO"%>
 <%@page import="models.WateringLog"%>
+<%@page import="dao.NotificationDAO"%>
+<%@page import="models.Notification"%>
 <%@page import="java.util.List"%>
 <%
   User u = (User) session.getAttribute("user");
@@ -17,6 +19,9 @@
   String err = request.getParameter("err");
 
   List<WateringLog> wlogs = new WateringLogDAO().listLatest(10);
+  NotificationDAO notifDAO = new NotificationDAO();
+  int notifUnread = notifDAO.countUnread();
+  List<Notification> notifs = notifDAO.listLatest(8);
 %>
 <!doctype html>
 <html>
@@ -43,6 +48,11 @@
     .btn { padding:8px 12px; border:1px solid #ddd; border-radius:10px; text-decoration:none; background:#fff; cursor:pointer; }
     .btn.primary { border-color:#6b21a8; color:#6b21a8; }
     .btn:disabled { opacity:.5; cursor:not-allowed; }
+    .badge { display:inline-block; padding:4px 8px; border-radius:999px; font-size:12px; border:1px solid #ddd; background:#fff; }
+    .notif-item { border:1px solid #eee; border-radius:10px; padding:10px; margin-bottom:8px; }
+    .lvl { font-size:11px; padding:2px 8px; border-radius:999px; border:1px solid #ddd; }
+    .lvl.warn { border-color:#f59e0b; color:#b45309; background:#fffbeb; }
+    .lvl.danger { border-color:#ef4444; color:#b91c1c; background:#fef2f2; }
   </style>
 </head>
 <body>
@@ -117,6 +127,59 @@
 
     <div style="margin-top:10px; font-size:12px; color:#666;">
       Tombol ON/OFF akan: (1) simpan log ke DB, (2) publish MQTT ke <b>okra/pump/cmd</b>.
+    </div>
+  </div>
+
+  <!-- TENGAH: Notifikasi -->
+  <div class="card" style="flex:1; min-width:320px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+      <h3 style="margin:0;">Notifikasi</h3>
+      <span id="notifBadge" class="badge"><%=notifUnread%> belum dibaca</span>
+    </div>
+
+    <div style="margin:10px 0; display:flex; gap:8px; flex-wrap:wrap;">
+      <button type="button" class="btn" onclick="loadNotifs()">Refresh</button>
+      <button type="button" class="btn" onclick="markAllNotifsRead()">Tandai semua dibaca</button>
+    </div>
+
+    <div id="notifList" style="max-height:300px; overflow:auto;">
+      <%
+        if (notifs == null || notifs.isEmpty()) {
+      %>
+        <div style="padding:10px; color:#666;">Belum ada notifikasi.</div>
+      <%
+        } else {
+          for (Notification n : notifs) {
+            String waktu = "-";
+            if (n.getCreatedAt() != null) {
+              String s = n.getCreatedAt().toString();
+              waktu = (s.length() >= 19) ? s.substring(0,19) : s;
+            }
+            String lvl = (n.getLevel() == null) ? "" : n.getLevel().toUpperCase();
+            String lvlCls = "WARNING".equals(lvl) ? "warn" : ("DANGER".equals(lvl) ? "danger" : "");
+            boolean unread = n.getStatus() != null && n.getStatus().equalsIgnoreCase("UNREAD");
+      %>
+        <div class="notif-item">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+              <span class="lvl <%=lvlCls%>"><%=lvl%></span>
+              <span style="font-size:12px; color:#666;">Sensor: <b><%=n.getSensorKey()%></b> • <%=waktu%></span>
+            </div>
+            <% if (unread) { %>
+              <button type="button" class="btn" style="padding:6px 10px;" onclick="markNotifRead(<%=n.getId()%>)">Dibaca</button>
+            <% } %>
+          </div>
+          <div style="margin-top:6px;"><%=n.getMessage()%></div>
+          <div style="margin-top:6px; font-size:12px; color:#666;">Source: <b><%=n.getSource()%></b> • Status: <b><%=n.getStatus()%></b></div>
+        </div>
+      <%
+          }
+        }
+      %>
+    </div>
+
+    <div style="margin-top:10px; font-size:12px; color:#666;">
+      Notifikasi dibuat otomatis jika nilai sensor memasuki ambang batas (<b>WARNING</b>) atau melewati batas (<b>DANGER</b>).
     </div>
   </div>
 
@@ -311,6 +374,92 @@
 
   // init UI dari localStorage
   applyAutoModeUI(getAutoMode());
+
+  // ===== NOTIFICATIONS =====
+  function escHtml(s){
+    if (s == null) return '';
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function fmtTime(ts){
+    if (!ts) return '-';
+    // ts umumnya: "2026-01-03 18:05:00.0"
+    const s = String(ts);
+    return (s.length >= 19) ? s.substring(0,19) : s;
+  }
+
+  function renderNotifs(unread, data){
+    const badge = document.getElementById('notifBadge');
+    if (badge) badge.textContent = (unread || 0) + ' belum dibaca';
+
+    const box = document.getElementById('notifList');
+    if (!box) return;
+
+    if (!data || !data.length){
+      box.innerHTML = '<div style="padding:10px; color:#666;">Belum ada notifikasi.</div>';
+      return;
+    }
+
+    let html = '';
+    for (const n of data){
+      const lvl = (n.level || '').toUpperCase();
+      const lvlCls = (lvl === 'DANGER') ? 'danger' : 'warn';
+      const unread = (String(n.status || '').toUpperCase() === 'UNREAD');
+
+      html += '<div class="notif-item">'
+        + '<div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">'
+        +   '<div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">'
+        +     '<span class="lvl ' + lvlCls + '">' + escHtml(lvl) + '</span>'
+        +     '<span style="font-size:12px; color:#666;">Sensor: <b>' + escHtml(n.sensorKey) + '</b> • ' + escHtml(fmtTime(n.createdAt)) + '</span>'
+        +   '</div>'
+        +   (unread ? '<button type="button" class="btn" style="padding:6px 10px;" onclick="markNotifRead(' + Number(n.id) + ')">Dibaca</button>' : '')
+        + '</div>'
+        + '<div style="margin-top:6px;">' + escHtml(n.message) + '</div>'
+        + '<div style="margin-top:6px; font-size:12px; color:#666;">Source: <b>' + escHtml(n.source) + '</b> • Status: <b>' + escHtml(n.status) + '</b></div>'
+        + '</div>';
+    }
+
+    box.innerHTML = html;
+  }
+
+  async function loadNotifs(){
+    try{
+      const r = await fetch(CTX + '/api/notifications/latest?limit=8', { cache:'no-store' });
+      const j = await r.json().catch(()=>null);
+      if (!r.ok || !j || j.ok !== true) return;
+      renderNotifs(j.unread, j.data);
+    }catch(e){}
+  }
+  window.loadNotifs = loadNotifs;
+
+  async function markAllNotifsRead(){
+    try{
+      const r = await fetch(CTX + '/api/notifications/markAllRead', { method:'POST' });
+      const j = await r.json().catch(()=>null);
+      if (!r.ok || !j || j.ok !== true) return;
+      loadNotifs();
+    }catch(e){}
+  }
+  window.markAllNotifsRead = markAllNotifsRead;
+
+  async function markNotifRead(id){
+    try{
+      const r = await fetch(CTX + '/api/notifications/markRead?id=' + encodeURIComponent(id), { method:'POST' });
+      const j = await r.json().catch(()=>null);
+      if (!r.ok || !j || j.ok !== true) return;
+      loadNotifs();
+    }catch(e){}
+  }
+  window.markNotifRead = markNotifRead;
+
+  // auto refresh notifikasi
+  loadNotifs();
+  setInterval(loadNotifs, 5000);
 </script>
 
 </body>

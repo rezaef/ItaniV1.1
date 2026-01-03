@@ -13,6 +13,7 @@ import javax.servlet.http.HttpServletResponse;
  * @author rezaef
  */
 import dao.SensorDAO;
+import utils.SensorNotifier;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -55,6 +56,18 @@ public class SensorController extends HttpServlet {
             if (soilMoist == null) soilMoist = pickDouble(req, body, "humi");
 
             boolean ok = new SensorDAO().insertReading(ph, soilMoist, soilTemp, ec, n, p, k);
+
+            // Buat notifikasi WARNING/DANGER dari reading sensor
+            if (ok) {
+                try {
+                    HttpSession s = req.getSession(false);
+                    String src = (s != null && s.getAttribute("user") != null) ? "WEB" : "ESP";
+                    SensorNotifier.onNewReading(ph, soilMoist, soilTemp, ec, n, p, k, src);
+                } catch (Exception ex) {
+                    // tidak ganggu response utama
+                    System.out.println("[SENSOR] notify error: " + ex.getMessage());
+                }
+            }
 
             if (ok) resp.getWriter().write("{\"ok\":true,\"message\":\"inserted\"}");
             else {
