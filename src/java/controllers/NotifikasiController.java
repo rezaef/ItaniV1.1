@@ -17,8 +17,8 @@ import javax.servlet.http.HttpServletResponse;
  * @author rezaef
  */
 
-import dao.NotificationDAO;
-import models.Notification;
+import dao.NotifikasiUserDAO;
+import models.NotifikasiUser;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -26,12 +26,12 @@ import javax.servlet.http.*;
 import java.io.IOException;
 import java.util.List;
 
-@WebServlet(name="NotificationController", urlPatterns = {
+@WebServlet(name="NotifikasiController", urlPatterns = {
         "/api/notifications/latest",
         "/api/notifications/markAllRead",
         "/api/notifications/markRead"
 })
-public class NotificationController extends HttpServlet {
+public class NotifikasiController extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -49,9 +49,9 @@ public class NotificationController extends HttpServlet {
             int limit = parseInt(req.getParameter("limit"), 8);
             limit = Math.max(1, Math.min(limit, 50));
 
-            NotificationDAO dao = new NotificationDAO();
+            NotifikasiUserDAO dao = new NotifikasiUserDAO();
             int unread = dao.countUnread();
-            List<Notification> list = dao.listLatest(limit);
+            List<NotifikasiUser> list = dao.listLatest(limit);
 
             StringBuilder sb = new StringBuilder();
             sb.append("{\"ok\":true,");
@@ -59,14 +59,14 @@ public class NotificationController extends HttpServlet {
             sb.append("\"data\":[");
 
             for (int i = 0; i < list.size(); i++) {
-                Notification n = list.get(i);
+                NotifikasiUser n = list.get(i);
                 if (i > 0) sb.append(",");
                 sb.append("{");
                 sb.append("\"id\":").append(n.getId()).append(",");
                 sb.append("\"ruleKey\":\"").append(esc(n.getRuleKey())).append("\",");
                 sb.append("\"sensorKey\":\"").append(esc(n.getSensorKey())).append("\",");
                 sb.append("\"level\":\"").append(esc(n.getLevel())).append("\",");
-                sb.append("\"message\":\"").append(esc(n.getMessage())).append("\",");
+                sb.append("\"message\":\"").append(esc(n.getPesan())).append("\",");
                 sb.append("\"value\":").append(n.getValue() == null ? "null" : n.getValue()).append(",");
                 sb.append("\"status\":\"").append(esc(n.getStatus())).append("\",");
                 sb.append("\"source\":\"").append(esc(n.getSource())).append("\",");
@@ -94,7 +94,7 @@ public class NotificationController extends HttpServlet {
             return;
         }
 
-        NotificationDAO dao = new NotificationDAO();
+        NotifikasiUserDAO dao = new NotifikasiUserDAO();
 
         if ("/api/notifications/markAllRead".equals(path)) {
             boolean ok = dao.markAllRead();

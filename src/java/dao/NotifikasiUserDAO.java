@@ -23,12 +23,12 @@ import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
-import models.Notification;
+import models.NotifikasiUser;
 
 /**
- * DAO untuk NotifikasiUser.
+ * DAO untuk NotifikasiUser (sesuai UML).
  */
-public class NotificationDAO {
+public class NotifikasiUserDAO {
 
     public boolean insert(String ruleKey, String sensorKey, String level,
                           String message, Double value, String source) {
@@ -86,10 +86,10 @@ public class NotificationDAO {
         return 0;
     }
 
-    public List<Notification> listLatest(int limit) {
+    public List<NotifikasiUser> listLatest(int limit) {
         String sql = "SELECT id, rule_key, sensor_key, level, message, value, status, source, created_at "
                    + "FROM notifications ORDER BY id DESC LIMIT ?";
-        List<Notification> out = new ArrayList<>();
+        List<NotifikasiUser> out = new ArrayList<>();
         try (Connection c = DB.getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
 
@@ -129,7 +129,7 @@ public class NotificationDAO {
         return false;
     }
 
-    private Notification mapRow(ResultSet rs) throws Exception {
+    private NotifikasiUser mapRow(ResultSet rs) throws Exception {
         int id = rs.getInt("id");
         String ruleKey = rs.getString("rule_key");
         String sensorKey = rs.getString("sensor_key");
@@ -139,6 +139,6 @@ public class NotificationDAO {
         String status = rs.getString("status");
         String source = rs.getString("source");
         Timestamp createdAt = rs.getTimestamp("created_at");
-        return new Notification(id, ruleKey, sensorKey, level, message, value, status, source, createdAt);
+        return new NotifikasiUser(id, ruleKey, sensorKey, level, message, value, status, source, createdAt);
     }
 }

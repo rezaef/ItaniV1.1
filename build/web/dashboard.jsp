@@ -8,8 +8,8 @@
 <%@page import="models.User"%>
 <%@page import="dao.WateringLogDAO"%>
 <%@page import="models.WateringLog"%>
-<%@page import="dao.NotificationDAO"%>
-<%@page import="models.Notification"%>
+<%@page import="dao.NotifikasiUserDAO"%>
+<%@page import="models.NotifikasiUser"%>
 <%@page import="java.util.List"%>
 <%
   User u = (User) session.getAttribute("user");
@@ -19,9 +19,9 @@
   String err = request.getParameter("err");
 
   List<WateringLog> wlogs = new WateringLogDAO().listLatest(10);
-  NotificationDAO notifDAO = new NotificationDAO();
+  NotifikasiUserDAO notifDAO = new NotifikasiUserDAO();
   int notifUnread = notifDAO.countUnread();
-  List<Notification> notifs = notifDAO.listLatest(8);
+  List<NotifikasiUser> notifs = notifDAO.listLatest(8);
 %>
 <!doctype html>
 <html>
@@ -149,7 +149,7 @@
         <div style="padding:10px; color:#666;">Belum ada notifikasi.</div>
       <%
         } else {
-          for (Notification n : notifs) {
+          for (NotifikasiUser n : notifs) {
             String waktu = "-";
             if (n.getCreatedAt() != null) {
               String s = n.getCreatedAt().toString();
@@ -169,7 +169,7 @@
               <button type="button" class="btn" style="padding:6px 10px;" onclick="markNotifRead(<%=n.getId()%>)">Dibaca</button>
             <% } %>
           </div>
-          <div style="margin-top:6px;"><%=n.getMessage()%></div>
+          <div style="margin-top:6px;"><%=n.getPesan()%></div>
           <div style="margin-top:6px; font-size:12px; color:#666;">Source: <b><%=n.getSource()%></b> • Status: <b><%=n.getStatus()%></b></div>
         </div>
       <%

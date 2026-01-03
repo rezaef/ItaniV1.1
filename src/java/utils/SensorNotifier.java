@@ -17,7 +17,7 @@ import javax.servlet.http.HttpServletResponse;
  * @author rezaef
  */
 
-import dao.NotificationDAO;
+import dao.NotifikasiUserDAO;
 
 /**
  * Mengecek pembacaan sensor dan membuat notifikasi WARNING/DANGER jika
@@ -102,7 +102,7 @@ public class SensorNotifier {
 
         if (level == null) return;
 
-        NotificationDAO dao = new NotificationDAO();
+        NotifikasiUserDAO dao = new NotifikasiUserDAO();
 
         // Anti-spam: jangan insert rule yang sama kalau baru dibuat dalam cooldown
         if (dao.hasRecent(ruleKey, cooldown)) return;
