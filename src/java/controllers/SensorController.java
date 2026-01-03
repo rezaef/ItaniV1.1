@@ -25,7 +25,8 @@ import javax.servlet.http.*;
 
 @WebServlet(name="SensorController", urlPatterns = {
         "/api/sensors/insert",
-        "/api/sensors/latest"
+        "/api/sensors/latest",
+        "/api/sensors/history"
 })
 public class SensorController extends HttpServlet {
 
@@ -110,6 +111,40 @@ public class SensorController extends HttpServlet {
                     + "}";
 
             resp.getWriter().write(json);
+            return;
+        }
+
+        if ("/api/sensors/history".equals(path)) {
+            int limit = 30;
+            try {
+                String s = req.getParameter("limit");
+                if (s != null && !s.isEmpty()) limit = Integer.parseInt(s);
+            } catch (Exception ignored) {}
+
+            java.util.List<java.util.Map<String, Object>> rows = new SensorDAO().history(limit);
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("{\"ok\":true,\"limit\":").append(limit).append(",\"data\":[");
+            for (int i = 0; i < rows.size(); i++) {
+                java.util.Map<String, Object> r = rows.get(i);
+                String ts = String.valueOf(r.get("reading_time"));
+                // default Timestamp#toString: 2026-01-03 22:00:00.0 -> trim biar rapih
+                if (ts != null && ts.length() >= 19) ts = ts.substring(0, 19);
+
+                if (i > 0) sb.append(',');
+                sb.append('{')
+                  .append("\"ph\":").append(toJsonNumber(r.get("ph"))).append(',')
+                  .append("\"soil_moisture\":").append(toJsonNumber(r.get("soil_moisture"))).append(',')
+                  .append("\"soil_temp\":").append(toJsonNumber(r.get("soil_temp"))).append(',')
+                  .append("\"ec\":").append(toJsonNumber(r.get("ec"))).append(',')
+                  .append("\"n\":").append(toJsonNumber(r.get("n"))).append(',')
+                  .append("\"p\":").append(toJsonNumber(r.get("p"))).append(',')
+                  .append("\"k\":").append(toJsonNumber(r.get("k"))).append(',')
+                  .append("\"reading_time\":\"").append(escapeJson(ts)).append("\"")
+                  .append('}');
+            }
+            sb.append("]}");
+            resp.getWriter().write(sb.toString());
             return;
         }
 

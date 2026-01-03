@@ -11,8 +11,8 @@ package utils;
 
 public class MqttConfig {
     // Broker kamu (sesuai file kamu sekarang)
-//    public static final String BROKER_URI = "tcp://10.218.9.244:1883";
-    public static final String BROKER_URI = "tcp://192.168.0.5:1883";
+//  public static final String BROKER_URI = "tcp://10.218.9.244:1883"; // Wifi Kampus
+    public static final String BROKER_URI = "tcp://192.168.0.5:1883"; // Wifi Rumah
     public static final String CLIENT_ID  = "itani-java-subscriber";
 
     public static final String USERNAME   = "okra";

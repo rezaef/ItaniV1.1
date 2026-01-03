@@ -29,6 +29,7 @@
 <head>
   <meta charset="utf-8"/>
   <title>ITani - Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <% if (msg != null) { %>
   <div style="background:#ecfdf5;border:1px solid #34d399;padding:10px;border-radius:10px;margin:10px 0;">
     <%=msg%>
@@ -54,6 +55,14 @@
     .lvl { font-size:11px; padding:2px 8px; border-radius:999px; border:1px solid #ddd; }
     .lvl.warn { border-color:#f59e0b; color:#b45309; background:#fffbeb; }
     .lvl.danger { border-color:#ef4444; color:#b91c1c; background:#fef2f2; }
+
+    .chart-grid{ display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:12px; margin-top:12px; }
+    @media (min-width: 1100px){
+      .chart-grid{ grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    .chart-card{ padding:14px; }
+    .chart-title{ font-weight:bold; margin-bottom:8px; }
+    .chart-wrap{ position:relative; height:180px; }
   </style>
 </head>
 <body>
@@ -87,7 +96,17 @@
     <div class="card"><div>K</div><div class="val" id="k">-</div></div>
     <div class="card"><div>Waktu</div><div class="val" style="font-size:14px" id="t">-</div></div>
   </div>
+
   
+  <h3 style="margin-top:18px;">Grafik Sensor (30 data terakhir)</h3>
+  <div class="card chart-card" style="margin-top:12px;">
+    <div class="chart-title">Semua Sensor (poin)</div>
+    <div class="chart-wrap" style="height:320px;"><canvas id="chart_all"></canvas></div>
+    <div style="margin-top:8px; font-size:12px; color:#666;">
+      Tip: klik label di legend untuk sembunyikan/tampilkan dataset sensor.
+    </div>
+  </div>
+
 <div style="display:flex; gap:16px; flex-wrap:wrap; margin-top:16px;">
 
   <!-- KIRI: Kontrol Pompa (ON/OFF saja) -->
@@ -275,7 +294,125 @@
   loadLatest();
   setInterval(loadLatest, 3000);
 
-  // ===== PUMP STATUS =====
+    // ===== SENSOR CHART (ALL IN ONE) =====
+  var __allChart = null;
+
+  function fmtLabel(ts){
+    if (!ts) return '';
+    const s = String(ts);
+    // "YYYY-MM-DD HH:mm:ss" => ambil HH:mm:ss
+    if (s.length >= 19) return s.substring(11, 19);
+    return s;
+  }
+
+  function ensureAllChart(){
+    const canvas = document.getElementById('chart_all');
+    if (!canvas || typeof Chart === 'undefined') return null;
+    if (__allChart) return __allChart;
+
+    const ctx = canvas.getContext('2d');
+
+    // Palet sederhana (biar tiap sensor beda)
+    const C = [
+      '#6b21a8', // pH
+      '#0ea5e9', // moisture
+      '#f97316', // temp
+      '#22c55e', // EC
+      '#ef4444', // N
+      '#eab308', // P
+      '#14b8a6'  // K
+    ];
+
+    __allChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [
+          // garis + poin (lebih enak dibaca). legend bisa di-klik untuk hide/show.
+          ...(function(){
+            const mkDS = (label, color) => ({
+              label,
+              data: [],
+              borderColor: color,
+              backgroundColor: color,
+              borderWidth: 2,
+              tension: 0.35,                // smoothing
+              cubicInterpolationMode: 'monotone',
+              pointRadius: 2.5,
+              pointHoverRadius: 5,
+              pointHitRadius: 10,
+              fill: false,
+              spanGaps: true
+            });
+            return [
+              mkDS('pH', C[0]),
+              mkDS('Moisture', C[1]),
+              mkDS('Temp', C[2]),
+              mkDS('EC', C[3]),
+              mkDS('N', C[4]),
+              mkDS('P', C[5]),
+              mkDS('K', C[6])
+            ];
+          })()
+        ]
+      },
+      options: {
+        responsive: true,
+        elements: { line: { borderJoinStyle: 'round', borderCapStyle: 'round' } },
+        maintainAspectRatio: false,
+        animation: true,
+        plugins: {
+          legend: { display: true, position: 'bottom', labels: { usePointStyle: true, boxWidth: 10 } },
+          tooltip: { mode: 'index', intersect: false }
+        },
+        interaction: { mode: 'index', intersect: false },
+        scales: {
+          x: { ticks: { maxTicksLimit: 10 } },
+          y: { beginAtZero: false }
+        }
+      }
+    });
+
+    return __allChart;
+  }
+
+  function updateAllChart(labels, rows){
+    const ch = ensureAllChart();
+    if (!ch) return;
+
+    ch.data.labels = labels;
+
+    // urutan dataset harus sama dengan di ensureAllChart()
+    ch.data.datasets[0].data = rows.map(r => r.ph);
+    ch.data.datasets[1].data = rows.map(r => r.soil_moisture);
+    ch.data.datasets[2].data = rows.map(r => r.soil_temp);
+    ch.data.datasets[3].data = rows.map(r => r.ec);
+    ch.data.datasets[4].data = rows.map(r => r.n);
+    ch.data.datasets[5].data = rows.map(r => r.p);
+    ch.data.datasets[6].data = rows.map(r => r.k);
+
+    ch.update('none');
+  }
+
+  async function loadHistory(){
+    try{
+      const res = await fetch(CTX + "/api/sensors/history?limit=30", { cache:"no-store" });
+      const json = await res.json().catch(()=>null);
+      if(!json || !json.ok) return;
+
+      const rows = json.data || [];
+      if(!rows.length) return;
+
+      const labels = rows.map(r => fmtLabel(r.reading_time));
+      updateAllChart(labels, rows);
+    }catch(e){}
+  }
+
+  // first load + refresh berkala
+  loadHistory();
+  setInterval(loadHistory, 5000);
+
+// ===== PUMP STATUS =====
   async function refreshPump(){
     const elS = document.getElementById("pumpStatus");
     const elT = document.getElementById("pumpTime"); // kalau gak ada, aman
