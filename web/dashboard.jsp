@@ -6,21 +6,43 @@
 
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@page import="models.User"%>
+<%@page import="dao.WateringLogDAO"%>
+<%@page import="models.WateringLog"%>
+<%@page import="java.util.List"%>
 <%
   User u = (User) session.getAttribute("user");
+%>
+<%
+  String msg = request.getParameter("msg");
+  String err = request.getParameter("err");
+
+  List<WateringLog> wlogs = new WateringLogDAO().listLatest(10);
 %>
 <!doctype html>
 <html>
 <head>
   <meta charset="utf-8"/>
   <title>ITani - Dashboard</title>
+  <% if (msg != null) { %>
+  <div style="background:#ecfdf5;border:1px solid #34d399;padding:10px;border-radius:10px;margin:10px 0;">
+    <%=msg%>
+  </div>
+    <% } %>
+    <% if (err != null) { %>
+      <div style="background:#fef2f2;border:1px solid #f87171;padding:10px;border-radius:10px;margin:10px 0;">
+        <%=err%>
+      </div>
+    <% } %>
+
   <style>
     body { font-family: Arial; padding: 24px; }
     .top { display:flex; justify-content:space-between; align-items:center; }
     .grid { display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap:12px; margin-top:14px; }
     .card { border:1px solid #ddd; border-radius:12px; padding:14px; }
     .val { font-size:22px; font-weight:bold; margin-top:8px; }
-    a.btn { padding:8px 12px; border:1px solid #ddd; border-radius:10px; text-decoration:none; }
+    .btn { padding:8px 12px; border:1px solid #ddd; border-radius:10px; text-decoration:none; background:#fff; cursor:pointer; }
+    .btn.primary { border-color:#6b21a8; color:#6b21a8; }
+    .btn:disabled { opacity:.5; cursor:not-allowed; }
   </style>
 </head>
 <body>
@@ -51,29 +73,238 @@
     <div class="card"><div>K</div><div class="val" id="k">-</div></div>
     <div class="card"><div>Waktu</div><div class="val" style="font-size:14px" id="t">-</div></div>
   </div>
+  
+<div style="display:flex; gap:16px; flex-wrap:wrap; margin-top:16px;">
+
+  <!-- KIRI: Kontrol Pompa (ON/OFF saja) -->
+  <div class="card" style="flex:1; min-width:320px;">
+    <h3>Kontrol Pompa</h3>
+
+    <div style="margin:8px 0;">
+        Status: <b id="pumpStatus">-</b>
+        <span id="pumpTime" style="margin-left:8px; font-size:12px; color:#666;"></span>
+        <button type="button" class="btn" onclick="refreshPump()">Refresh</button>
+    </div>
+
+    <div style="margin:10px 0; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+      Mode: <b id="autoModeLabel">MANUAL</b>
+      <button type="button" class="btn" id="btnAutoOn" onclick="setAutoMode(true)">Otomatis ON</button>
+      <button type="button" class="btn" id="btnAutoOff" onclick="setAutoMode(false)">Otomatis OFF</button>
+    </div>
+    <div id="autoModeHint" style="margin-top:-6px; margin-bottom:8px; font-size:12px; color:#666;"></div>
+
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <form method="POST" action="<%=request.getContextPath()%>/api/watering/log" onsubmit="return guardManual();">
+        <input type="hidden" name="redirect" value="1"/>
+        <input type="hidden" name="next" value="/dashboard.jsp"/>
+        <input type="hidden" name="mode" value="MANUAL"/>
+        <input type="hidden" name="source" value="WEB"/>
+        <input type="hidden" name="action" value="ON"/>
+        <input type="hidden" name="note" value="manual via dashboard"/>
+        <button id="btnPumpOn" class="btn primary" type="submit">ON</button>
+      </form>
+
+      <form method="POST" action="<%=request.getContextPath()%>/api/watering/log" onsubmit="return guardManual();">
+        <input type="hidden" name="redirect" value="1"/>
+        <input type="hidden" name="next" value="/dashboard.jsp"/>
+        <input type="hidden" name="mode" value="MANUAL"/>
+        <input type="hidden" name="source" value="WEB"/>
+        <input type="hidden" name="action" value="OFF"/>
+        <input type="hidden" name="note" value="manual via dashboard"/>
+        <button id="btnPumpOff" class="btn primary" type="submit">OFF</button>
+      </form>
+    </div>
+
+    <div style="margin-top:10px; font-size:12px; color:#666;">
+      Tombol ON/OFF akan: (1) simpan log ke DB, (2) publish MQTT ke <b>okra/pump/cmd</b>.
+    </div>
+  </div>
+
+  <!-- KANAN: Watering Logs (10 terakhir) -->
+  <div class="card" style="flex:2; min-width:420px;">
+    <h3>Watering Logs (10 terakhir)</h3>
+
+    <table style="width:100%; border-collapse:collapse;">
+      <thead>
+        <tr>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #eee;">ID</th>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #eee;">Mode</th>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #eee;">Action</th>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #eee;">Source</th>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #eee;">Note</th>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #eee;">Tanggal</th>
+        </tr>
+      </thead>
+      <tbody>
+        <%
+          if (wlogs == null || wlogs.isEmpty()) {
+        %>
+          <tr><td colspan="6" style="padding:10px;">Belum ada data.</td></tr>
+        <%
+          } else {
+            for (WateringLog w : wlogs) {
+              String waktu = "-";
+                if (w.getCreatedAt() != null) {
+                  String s = w.getCreatedAt().toString(); // contoh: 2026-01-02 12:34:56.0
+                  waktu = (s.length() >= 19) ? s.substring(0,19) : s; // yyyy-MM-dd HH:mm:ss
+               }
+
+        %>
+          <tr>
+            <td style="padding:8px; border-bottom:1px solid #f3f3f3;"><%=w.getId()%></td>
+            <td style="padding:8px; border-bottom:1px solid #f3f3f3;"><%=w.getMode()%></td>
+            <td style="padding:8px; border-bottom:1px solid #f3f3f3;"><b><%=w.getAction()%></b></td>
+            <td style="padding:8px; border-bottom:1px solid #f3f3f3;"><%=w.getSource()%></td>
+            <td style="padding:8px; border-bottom:1px solid #f3f3f3;"><%=w.getNote()==null?"":w.getNote()%></td>
+            <td style="padding:8px; border-bottom:1px solid #f3f3f3;"><%=waktu%></td>
+          </tr>
+        <%
+            }
+          }
+        %>
+      </tbody>
+    </table>
+
+    <div style="margin-top:10px;">
+      <a class="btn" href="<%=request.getContextPath()%>/watering_logs.jsp">Lihat semua</a>
+    </div>
+  </div>
+
+</div>
 
 <script>
-async function loadLatest(){
-  const res = await fetch('<%=request.getContextPath()%>/api/sensors/latest');
-  const json = await res.json().catch(()=>null);
-  if(!json || !json.ok) return;
+  // Jangan pakai const (biar gak duplicate error kalau kebaca ulang)
+  var CTX = "<%=request.getContextPath()%>";
 
-  const d = json.data;
-  if(!d){
-    document.getElementById('t').textContent = 'Belum ada data sensor';
-    return;
+  // ===== SENSOR =====
+  async function loadLatest(){
+    try{
+      const res = await fetch(CTX + "/api/sensors/latest", { cache:"no-store" });
+      const json = await res.json().catch(()=>null);
+      if(!json || !json.ok) return;
+
+      const d = json.data;
+      if(!d){
+        const tEl = document.getElementById('t');
+        if (tEl) tEl.textContent = 'Belum ada data sensor';
+        return;
+      }
+
+      const set = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = (val ?? '-');
+      };
+
+      set('ph', d.ph);
+      set('sm', d.soil_moisture);
+      set('st', d.soil_temp);
+      set('ec', d.ec);
+      set('n', d.n);
+      set('p', d.p);
+      set('k', d.k);
+      set('t', d.reading_time);
+    }catch(e){}
   }
-  document.getElementById('ph').textContent = d.ph ?? '-';
-  document.getElementById('sm').textContent = d.soil_moisture ?? '-';
-  document.getElementById('st').textContent = d.soil_temp ?? '-';
-  document.getElementById('ec').textContent = d.ec ?? '-';
-  document.getElementById('n').textContent = d.n ?? '-';
-  document.getElementById('p').textContent = d.p ?? '-';
-  document.getElementById('k').textContent = d.k ?? '-';
-  document.getElementById('t').textContent = d.reading_time ?? '-';
-}
-loadLatest();
-setInterval(loadLatest, 3000);
+  loadLatest();
+  setInterval(loadLatest, 3000);
+
+  // ===== PUMP STATUS =====
+  async function refreshPump(){
+    const elS = document.getElementById("pumpStatus");
+    const elT = document.getElementById("pumpTime"); // kalau gak ada, aman
+
+    try{
+      const r = await fetch(CTX + "/pump/status", { cache:"no-store" });
+      const ct = (r.headers.get("content-type") || "").toLowerCase();
+      if(!r.ok || !ct.includes("application/json")) throw new Error("not json");
+
+      const j = await r.json();
+      if (elS) elS.innerText = (j.status || "-");
+
+      const ms = Number(j.updatedAtMs || 0);
+      if (elT){
+        if (ms > 0){
+          const d = new Date(ms);
+          elT.innerText = d.toLocaleTimeString("id-ID", { hour:"2-digit", minute:"2-digit", second:"2-digit", hour12:false });
+        } else {
+          elT.innerText = "";
+        }
+      }
+    }catch(e){
+      if (elS) elS.innerText = "-";
+      if (elT) elT.innerText = "";
+    }
+  }
+  refreshPump();
+  setInterval(refreshPump, 2000);
+
+  // ===== AUTO MODE (UI + HIT BACKEND) =====
+  const AUTO_KEY = "itani_autoMode"; // 1=auto, 0=manual
+
+  function getAutoMode(){
+    return localStorage.getItem(AUTO_KEY) === "1";
+  }
+
+  function applyAutoModeUI(on){
+    window.__autoModeEnabled = !!on;
+
+    const label = document.getElementById("autoModeLabel");
+    const hint  = document.getElementById("autoModeHint");
+    const btnOn = document.getElementById("btnPumpOn");
+    const btnOff= document.getElementById("btnPumpOff");
+
+    if (label) label.innerText = on ? "OTOMATIS" : "MANUAL";
+
+    [btnOn, btnOff].forEach(b=>{
+      if(!b) return;
+      b.disabled = on;
+    });
+
+    if (hint) hint.innerText = on
+      ? "Mode otomatis aktif → kontrol manual (ON/OFF) dinonaktifkan."
+      : "";
+  }
+
+  // dipakai form ON/OFF
+  function guardManual(){
+    if (window.__autoModeEnabled) {
+      alert("Mode otomatis sedang aktif. Matikan dulu untuk kontrol manual.");
+      return false;
+    }
+    return true;
+  }
+  window.guardManual = guardManual;
+
+  // dipakai tombol Otomatis ON/OFF
+  async function setAutoMode(on){
+    localStorage.setItem(AUTO_KEY, on ? "1" : "0");
+    applyAutoModeUI(on);
+
+    const hint = document.getElementById("autoModeHint");
+    try{
+      if (hint) hint.innerText = "Mengirim mode...";
+
+      const url = CTX + (on ? "/pump/mode/auto/on" : "/pump/mode/auto/off");
+      const r = await fetch(url, { method:"POST", cache:"no-store" });
+      const j = await r.json().catch(()=>null);
+
+      if(!r.ok || !j || j.ok !== true){
+        if (hint) hint.innerText = "Gagal publish mode (cek server/MQTT).";
+        console.log("AUTO MODE FAIL:", r.status, j);
+        return;
+      }
+      if (hint) hint.innerText = "Mode terkirim ✅";
+      console.log("AUTO MODE OK:", j);
+    }catch(e){
+      if (hint) hint.innerText = "Gagal kirim mode ke server.";
+      console.log("AUTO MODE EX:", e);
+    }
+  }
+  window.setAutoMode = setAutoMode;
+
+  // init UI dari localStorage
+  applyAutoModeUI(getAutoMode());
 </script>
+
 </body>
 </html>

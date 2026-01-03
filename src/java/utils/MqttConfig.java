@@ -9,14 +9,25 @@ package utils;
  * @author rezaef
  */
 
-
 public class MqttConfig {
-    // Ganti sesuai broker kamu
-    public static final String BROKER_URI = "tcp://10.218.9.244:1883"; // contoh RabbitMQ MQTT / Mosquitto
+    // Broker kamu (sesuai file kamu sekarang)
+//    public static final String BROKER_URI = "tcp://10.218.9.244:1883";
+    public static final String BROKER_URI = "tcp://10.208.46.81:1883";
     public static final String CLIENT_ID  = "itani-java-subscriber";
-    public static final String TOPIC      = "okra/sensor";
-    public static final String USERNAME   = "okra"; // isi kalau broker pakai auth
-    public static final String PASSWORD   = "okra123"; // isi kalau broker pakai auth
+
+    public static final String USERNAME   = "okra";
+    public static final String PASSWORD   = "okra123";
 
     public static final int QOS = 1;
+
+    // === TOPIC SENSOR ===
+    public static final String TOPIC_SENSOR = "okra/sensor";
+
+    // === TOPIC PUMP (utama: TANPA leading slash, sesuai ESP paling umum) ===
+    public static final String TOPIC_PUMP_CMD    = "okra/pump/cmd";
+    public static final String TOPIC_PUMP_STATUS = "okra/pump/status";
+    
+    // PUMP MODE (AUTO/MANUAL)
+    public static final String TOPIC_AUTO_MODE   = "okra/pump/autoMode";
+
 }
