@@ -219,7 +219,14 @@
       if(!r.ok || !ct.includes("application/json")) throw new Error("not json");
 
       const j = await r.json();
-      if (elS) elS.innerText = (j.status || "-");
+//      const elS = document.getElementById("pumpStatus");
+        let st = (j.status || "-");
+
+        if (st === "PENDING_ON") st = "ON (pending)";
+        if (st === "PENDING_OFF") st = "OFF (pending)";
+
+        if (elS) elS.innerText = st;
+
 
       const ms = Number(j.updatedAtMs || 0);
       if (elT){
