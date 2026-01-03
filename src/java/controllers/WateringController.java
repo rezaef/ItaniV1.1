@@ -19,6 +19,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import dao.WateringLogDAO;
 import utils.MqttSubscriber;
+import utils.AutoModeState;
 
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
@@ -42,6 +43,12 @@ public class WateringController extends HttpServlet {
         if (mode == null) mode = "MANUAL";
         if (source == null) source = "WEB";
         if (note == null) note = "";
+
+        // Safety: jika mode otomatis sedang aktif di server, blok kontrol manual
+        if (AutoModeState.isEnabled() && "MANUAL".equals(mode)) {
+            respond(req, resp, false, "Mode otomatis sedang aktif. Matikan dulu untuk kontrol manual.");
+            return;
+        }
 
         if (!"ON".equals(action) && !"OFF".equals(action)) {
             respond(req, resp, false, "Action harus ON/OFF");
