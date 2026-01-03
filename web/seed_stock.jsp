@@ -8,7 +8,6 @@
   User u = (User) session.getAttribute("user");
   if (u == null) { response.sendRedirect(request.getContextPath()+"/index.jsp"); return; }
 
-  boolean isAdmin = "Admin".equalsIgnoreCase(u.getRole());
   String ok = request.getParameter("ok");
   String err = request.getParameter("err");
 
@@ -56,10 +55,6 @@
       <a class="btn" href="<%=request.getContextPath()%>/api/auth/logout">Logout</a>
     </div>
   </div>
-
-  <% if (!isAdmin) { %>
-    <div class="msg err">Akses ditolak. Halaman ini khusus Admin.</div>
-  <% } else { %>
 
     <% if (ok != null) { %><div class="msg ok">Berhasil.</div><% } %>
     <% if (err != null) { %><div class="msg err">Gagal. Cek input / relasi data.</div><% } %>
@@ -139,7 +134,7 @@
       </div>
 
     </div>
-  <% } %>
+  
 
 </body>
 </html>

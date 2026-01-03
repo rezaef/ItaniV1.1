@@ -13,6 +13,10 @@ package models;
  * Model Laporan sesuai UML.
  */
 public class Laporan {
+    // Numeric ID di DB (untuk kebutuhan akses admin/petani)
+    private Integer userId;
+    private String dibuatOleh;
+
     private String idLaporan;
     private String tanggalLaporan;
     private String isiLaporan;
@@ -48,6 +52,12 @@ public class Laporan {
     public void setIsiLaporan(String isiLaporan) {
         this.isiLaporan = isiLaporan;
     }
+
+    public Integer getUserId() { return userId; }
+    public void setUserId(Integer userId) { this.userId = userId; }
+
+    public String getDibuatOleh() { return dibuatOleh; }
+    public void setDibuatOleh(String dibuatOleh) { this.dibuatOleh = dibuatOleh; }
 
     /**
      * Placeholder sesuai UML. Di web, cetak dilakukan via halaman print (window.print).

@@ -49,6 +49,7 @@
     .ok { background:#e9ffe9; border:1px solid #b7f5b7; }
     .err { background:#ffe9e9; border:1px solid #f5b7b7; }
     .rowbtn { display:flex; gap:8px; flex-wrap: wrap; }
+    .badge { display:inline-block; padding:4px 8px; border-radius:999px; font-size:12px; border:1px solid #ddd; background:#fff; }
   </style>
 </head>
 <body>
@@ -89,12 +90,13 @@
           <tr>
             <th>ID</th>
             <th>Tanggal</th>
+            <% if (isAdmin) { %><th>Dibuat oleh</th><% } %>
             <th>Aksi</th>
           </tr>
         </thead>
         <tbody>
         <% if (list == null || list.isEmpty()) { %>
-          <tr><td colspan="3" class="muted">Belum ada laporan.</td></tr>
+          <tr><td colspan="<%= (isAdmin ? 4 : 3) %>" class="muted">Belum ada laporan.</td></tr>
         <% } else {
              for (Laporan l : list) {
                // idLaporan = LAP-XXXX
@@ -103,6 +105,9 @@
           <tr>
             <td><b><%=l.getIdLaporan()%></b></td>
             <td><%=l.getTanggalLaporan()%></td>
+            <% if (isAdmin) { %>
+              <td><%= (l.getDibuatOleh()==null? "-" : l.getDibuatOleh()) %></td>
+            <% } %>
             <td>
               <a class="btn" href="<%=request.getContextPath()%>/laporan.jsp?view=<%=Integer.parseInt(num)%>">Lihat</a>
             </td>
@@ -123,6 +128,9 @@
         </div>
         <div class="muted" style="margin-bottom:8px;">
           <b><%=selected.getIdLaporan()%></b> • <%=selected.getTanggalLaporan()%>
+          <% if (isAdmin) { %>
+            • dibuat oleh: <b><%= (selected.getDibuatOleh()==null? "-" : selected.getDibuatOleh()) %></b>
+          <% } %>
         </div>
         <pre><%=selected.getIsiLaporan()%></pre>
       <% } %>

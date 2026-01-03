@@ -52,7 +52,8 @@ public class LaporanController extends HttpServlet {
         User u = (User) s.getAttribute("user");
         boolean isAdmin = u != null && "Admin".equalsIgnoreCase(u.getRole());
 
-        // sesuai diagram: Admin yang buat laporan. Tapi supaya fleksibel, Petani juga boleh buat laporan rekapnya sendiri.
+        // Kebijakan proyek: semua user (Admin/Petani) boleh generate laporan miliknya.
+        // Akses lihat laporan: Admin boleh lihat semua; Petani hanya laporannya sendiri.
         RekapManajemen rm = new RekapManajemen();
         rm.load(u == null ? null : u.getId(), isAdmin);
         Laporan lap = rm.buatLaporan(u, isAdmin);

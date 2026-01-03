@@ -13,6 +13,7 @@
 <%@page import="java.util.List"%>
 <%
   User u = (User) session.getAttribute("user");
+  boolean isAdmin = (u != null && "Admin".equalsIgnoreCase(u.getRole()));
 %>
 <%
   String msg = request.getParameter("msg");
@@ -70,9 +71,11 @@
     <a class="btn" href="<%=request.getContextPath()%>/fertilizer_stock.jsp">Fertilizer Stock</a>
     <a class="btn" href="<%=request.getContextPath()%>/periods.jsp">Periode & Panen</a>
     <a class="btn" href="<%=request.getContextPath()%>/rekap.jsp">Rekap & Laporan</a>
-</div>
-
+    <% if (isAdmin) { %>
+      <a class="btn" href="<%=request.getContextPath()%>/users.jsp">Kelola User</a>
+    <% } %>
   </div>
+
 
   <div class="grid">
     <div class="card"><div>pH</div><div class="val" id="ph">-</div></div>

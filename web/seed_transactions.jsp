@@ -10,7 +10,6 @@
   User u = (User) session.getAttribute("user");
   if (u == null) { response.sendRedirect(request.getContextPath()+"/index.jsp"); return; }
 
-  boolean isAdmin = "Admin".equalsIgnoreCase(u.getRole());
   String ok = request.getParameter("ok");
   String err = request.getParameter("err");
 
@@ -60,9 +59,7 @@
     </div>
   </div>
 
-  <% if (!isAdmin) { %>
-    <div class="msg err">Akses ditolak. Halaman ini khusus Admin.</div>
-  <% } else if (stock == null) { %>
+  <% if (stock == null) { %>
     <div class="msg err">Stock ID tidak valid. Kembali ke <a href="<%=request.getContextPath()%>/seed_stock.jsp">Seed Stock</a>.</div>
   <% } else { %>
 

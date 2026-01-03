@@ -27,23 +27,20 @@ public class HarvestDAO {
 
     /**
      * Ambil data panen terbaru lintas periode.
-     * Untuk Petani: dibatasi oleh periods.user_id.
+     * Catatan: sesuai kebutuhan project, data panen bersifat GLOBAL (bukan per-user).
+     * Kolom periode.user_id (pembuat) tidak dipakai untuk filter akses.
      */
     public List<Harvest> listLatest(int limit, Integer userId, boolean isAdmin) {
         List<Harvest> out = new ArrayList<>();
         String sql =
-            "SELECT h.id, h.periode_id, h.tanggal_panen, h.jenis_tanaman, h.jumlah_panen, h.catatan, h.created_at, h.updated_at " +
-            "FROM harvests h " +
-            "JOIN periods p ON p.id = h.periode_id " +
-            (isAdmin ? "" : "WHERE p.user_id = ? ") +
-            "ORDER BY h.tanggal_panen DESC, h.id DESC LIMIT ?";
+            "SELECT id, periode_id, tanggal_panen, jenis_tanaman, jumlah_panen, catatan, created_at, updated_at " +
+            "FROM harvests " +
+            "ORDER BY tanggal_panen DESC, id DESC LIMIT ?";
 
         try (Connection c = DB.getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
 
-            int idx = 1;
-            if (!isAdmin) ps.setInt(idx++, userId == null ? 0 : userId);
-            ps.setInt(idx, Math.max(1, Math.min(limit, 200)));
+            ps.setInt(1, Math.max(1, Math.min(limit, 200)));
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) out.add(map(rs));

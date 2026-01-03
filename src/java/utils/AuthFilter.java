@@ -21,9 +21,14 @@ import javax.servlet.http.*;
 @WebFilter(filterName="AuthFilter", urlPatterns={
     "/dashboard.jsp",
 
+    "/watering_logs.jsp",
+
     "/rekap.jsp",
     "/laporan.jsp",
     "/laporan/*",
+
+    "/api/watering/log",
+    "/pump/*",
 
     "/seed_stock.jsp",
     "/seed_transactions.jsp",
@@ -36,7 +41,10 @@ import javax.servlet.http.*;
     "/periods.jsp",
     "/harvests.jsp",
     "/period/*",
-    "/harvest/*"
+    "/harvest/*",
+
+    "/users.jsp",
+    "/user/*"
 
 })
 public class AuthFilter implements Filter {

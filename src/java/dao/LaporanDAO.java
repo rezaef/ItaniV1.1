@@ -37,7 +37,9 @@ public class LaporanDAO {
     }
 
     public Laporan findById(int id, Integer userId, boolean isAdmin) {
-        String sql = "SELECT id, user_id, tanggal_laporan, isi_laporan FROM laporan WHERE id=? " + (isAdmin ? "" : "AND user_id=?");
+        String sql = "SELECT l.id, l.user_id, l.tanggal_laporan, l.isi_laporan, u.name AS dibuat_oleh "
+                + "FROM laporan l LEFT JOIN users u ON u.id = l.user_id "
+                + "WHERE l.id=? " + (isAdmin ? "" : "AND l.user_id=?");
         try (Connection c = DB.getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setInt(1, id);
@@ -53,9 +55,10 @@ public class LaporanDAO {
 
     public List<Laporan> listLatest(int limit, Integer userId, boolean isAdmin) {
         List<Laporan> out = new ArrayList<>();
-        String sql = "SELECT id, user_id, tanggal_laporan, isi_laporan FROM laporan "
-                + (isAdmin ? "" : "WHERE user_id=? ")
-                + "ORDER BY id DESC LIMIT ?";
+        String sql = "SELECT l.id, l.user_id, l.tanggal_laporan, l.isi_laporan, u.name AS dibuat_oleh "
+                + "FROM laporan l LEFT JOIN users u ON u.id = l.user_id "
+                + (isAdmin ? "" : "WHERE l.user_id=? ")
+                + "ORDER BY l.id DESC LIMIT ?";
 
         try (Connection c = DB.getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
@@ -81,6 +84,12 @@ public class LaporanDAO {
         l.setIdLaporan(String.format("LAP-%04d", id));
         l.setTanggalLaporan(t == null ? "" : String.valueOf(t));
         l.setIsiLaporan(rs.getString("isi_laporan"));
+        try {
+            l.setUserId((Integer) rs.getObject("user_id"));
+        } catch (Exception ignored) {}
+        try {
+            l.setDibuatOleh(rs.getString("dibuat_oleh"));
+        } catch (Exception ignored) {}
         return l;
     }
 }
