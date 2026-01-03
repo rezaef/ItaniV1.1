@@ -69,6 +69,7 @@
     <a class="btn" href="<%=request.getContextPath()%>/seed_stock.jsp">Seed Stock</a>
     <a class="btn" href="<%=request.getContextPath()%>/fertilizer_stock.jsp">Fertilizer Stock</a>
     <a class="btn" href="<%=request.getContextPath()%>/periods.jsp">Periode & Panen</a>
+    <a class="btn" href="<%=request.getContextPath()%>/rekap.jsp">Rekap & Laporan</a>
 </div>
 
   </div>

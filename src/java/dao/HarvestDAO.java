@@ -25,6 +25,35 @@ import java.util.List;
 
 public class HarvestDAO {
 
+    /**
+     * Ambil data panen terbaru lintas periode.
+     * Untuk Petani: dibatasi oleh periods.user_id.
+     */
+    public List<Harvest> listLatest(int limit, Integer userId, boolean isAdmin) {
+        List<Harvest> out = new ArrayList<>();
+        String sql =
+            "SELECT h.id, h.periode_id, h.tanggal_panen, h.jenis_tanaman, h.jumlah_panen, h.catatan, h.created_at, h.updated_at " +
+            "FROM harvests h " +
+            "JOIN periods p ON p.id = h.periode_id " +
+            (isAdmin ? "" : "WHERE p.user_id = ? ") +
+            "ORDER BY h.tanggal_panen DESC, h.id DESC LIMIT ?";
+
+        try (Connection c = DB.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+
+            int idx = 1;
+            if (!isAdmin) ps.setInt(idx++, userId == null ? 0 : userId);
+            ps.setInt(idx, Math.max(1, Math.min(limit, 200)));
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) out.add(map(rs));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return out;
+    }
+
     public List<Harvest> listByPeriode(int periodeId) {
         List<Harvest> out = new ArrayList<>();
         String sql =

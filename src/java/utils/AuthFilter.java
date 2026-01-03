@@ -21,6 +21,10 @@ import javax.servlet.http.*;
 @WebFilter(filterName="AuthFilter", urlPatterns={
     "/dashboard.jsp",
 
+    "/rekap.jsp",
+    "/laporan.jsp",
+    "/laporan/*",
+
     "/seed_stock.jsp",
     "/seed_transactions.jsp",
     "/seed-stock/*",
